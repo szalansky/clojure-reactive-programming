@@ -33,12 +33,21 @@
   (set! (.-fillStyle ctx) colour)
   (.fillRect ctx x y 2 2))
 
-;; (-> sine-wave
-;;   (.take 600)
-;;   (.subscribe (fn [{:keys [x y]}]
-;;                 (fill-rect x y "red"))))
+(def red  (.map time  (fn  [_] "red")))
+(def blue  (.map time  (fn  [_] "blue")))
 
-(-> (.zip sine-wave colour #(vector % %2))
+(def concat     js/Rx.Observable.concat)
+(def defer      js/Rx.Observable.defer)
+(def from-event js/Rx.Observable.fromEvent)
+
+(def mouse-click (from-event canvas "click"))
+
+(def cycle-colour
+  (concat (.takeUntil red mouse-click)
+          (defer #(concat (.takeUntil blue mouse-click)
+                          cycle-colour))))
+
+(-> (.zip sine-wave cycle-colour #(vector % %2))
     (.take 600)
     (.subscribe (fn [[{:keys [x y]} colour]]
                   (fill-rect x y colour))))
